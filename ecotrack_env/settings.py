@@ -29,8 +29,12 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes')
 
 # Configure ALLOWED_HOSTS via environment variable (comma separated)
 # On Render, set DJANGO_ALLOWED_HOSTS to e.g. "ecotrack.onrender.com,localhost"
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
-
+ALLOWED_HOSTS = [
+    'ecotrack-local.onrender.com',          # ← le nom exact de ton app Render
+    'www.ecotrack-local.onrender.com',      # ← optionnel mais utile
+    'localhost',                            # pour tests locaux
+    '127.0.0.1',                            # idem
+]
 # Application definition
 
 INSTALLED_APPS = [
