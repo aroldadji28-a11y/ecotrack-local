@@ -142,10 +142,28 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = "static/"
+# Leading slash is recommended for STATIC_URL
+STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+# Optional: collect additional static assets from a project-level `static/` dir
+STATICFILES_DIRS = [BASE_DIR / 'static']
 # Use WhiteNoise storage for static files (gzip + manifest) in production
 STATICFILES_STORAGE = os.environ.get('DJANGO_STATIC_STORAGE', 'whitenoise.storage.CompressedManifestStaticFilesStorage')
+
+# Production security settings when DEBUG is False
+if not DEBUG:
+    # Ensure a real secret key is set in production
+    from django.core.exceptions import ImproperlyConfigured
+    if SECRET_KEY == 'django-insecure-dev-placeholder':
+        raise ImproperlyConfigured('DJANGO_SECRET_KEY must be set when DEBUG is False')
+
+    # Trust the PythonAnywhere host by default; can be overridden via env var
+    CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', f'https://dadjiarol.pythonanywhere.com').split(',')
+
+    # Cookie/security flags (override via env vars if needed)
+    SESSION_COOKIE_SECURE = os.environ.get('DJANGO_SESSION_COOKIE_SECURE', 'True').lower() in ('1','true','yes')
+    CSRF_COOKIE_SECURE = os.environ.get('DJANGO_CSRF_COOKIE_SECURE', 'True').lower() in ('1','true','yes')
+    SECURE_SSL_REDIRECT = os.environ.get('DJANGO_SECURE_SSL_REDIRECT', 'False').lower() in ('1','true','yes')
 
 # Media files (uploaded files)
 MEDIA_URL = '/media/'
