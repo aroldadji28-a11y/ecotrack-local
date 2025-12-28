@@ -28,11 +28,8 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-dev-placeholde
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes')
 
 # Configure ALLOWED_HOSTS via environment variable (comma separated)
-ALLOWED_HOSTS = [
-    'dadjiarol.pythonanywhere.com',
-    'www.dadjiarol.pythonanywhere.com',     # optionnel mais utile
-    '127.0.0.1', 'localhost',               # pour continuer à tester en local
-]
+# On Render, set DJANGO_ALLOWED_HOSTS to e.g. "ecotrack.onrender.com,localhost"
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
 # Application definition
 

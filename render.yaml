@@ -1,0 +1,19 @@
+# Optional: Render service definition. Edit values before use.
+services:
+  - type: web
+    name: ecotrack
+    env: python
+    region: oregon
+    plan: free
+    repo: https://github.com/YOUR_USER/YOUR_REPO
+    branch: main
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn ecotrack_env.wsgi --log-file -
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        fromDatabase: false
+      - key: DJANGO_DEBUG
+        value: 'False'
+      - key: DJANGO_ALLOWED_HOSTS
+        value: 'ecotrack.onrender.com'
+    # Optionally add database, mounts, etc.

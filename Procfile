@@ -1,0 +1,1 @@
+web: gunicorn ecotrack_env.wsgi --log-file -

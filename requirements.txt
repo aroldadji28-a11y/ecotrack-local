@@ -8,3 +8,6 @@ dj-database-url>=1.0.0
 # If you plan to use MySQL on PythonAnywhere, install mysqlclient (system packages may be required)
 # mysqlclient>=2.2.0
 
+# Gunicorn for production WSGI server (used by Render, Heroku, etc.)
+gunicorn>=20.1.0
+
