@@ -1,0 +1,10 @@
+Django>=4.2,<5.0
+pandas>=2.0.0
+matplotlib>=3.7.0
+numpy>=1.24.0
+Pillow>=10.0.0
+whitenoise>=6.0.0
+dj-database-url>=1.0.0
+# If you plan to use MySQL on PythonAnywhere, install mysqlclient (system packages may be required)
+# mysqlclient>=2.2.0
+

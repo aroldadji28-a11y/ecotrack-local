@@ -1,0 +1,438 @@
+{% extends 'base.html' %}
+
+{% block title %}Comparaisons - EcoTrack Local{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-bar-chart"></i> Comparaisons Interactives</h1>
+    <p class="mb-0">Comparez les coûts entre différents quartiers, la ville et le campus</p>
+</div>
+
+<!-- Onglets de navigation -->
+<ul class="nav nav-tabs mb-4" id="comparisonTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="quartier-tab" data-bs-toggle="tab" data-bs-target="#quartier" type="button">
+            <i class="bi bi-building"></i> Quartier vs Quartier
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="ville-tab" data-bs-toggle="tab" data-bs-target="#ville" type="button">
+            <i class="bi bi-geo-alt"></i> Quartier vs Ville
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="campus-tab" data-bs-toggle="tab" data-bs-target="#campus" type="button">
+            <i class="bi bi-mortarboard"></i> Campus vs Environnement
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="comparisonTabContent">
+    <!-- Tab 1: Quartier vs Quartier -->
+    <div class="tab-pane fade show active" id="quartier" role="tabpanel">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-building"></i> Comparaison Quartier vs Quartier
+            </div>
+            <div class="card-body">
+                <form method="get" action="{% url 'comparaison' %}">
+                    <div class="row mb-3">
+                        <div class="col-md-5">
+                            <label for="q1" class="form-label">Premier quartier</label>
+                            <input name="q1" id="q1" list="quartiers-list" class="form-control" value="{{ request.GET.q1 }}" placeholder="Entrez le quartier ou choisissez" required>
+                        </div>
+                        <div class="col-md-5">
+                            <label for="q2" class="form-label">Deuxième quartier</label>
+                            <input name="q2" id="q2" list="quartiers-list" class="form-control" value="{{ request.GET.q2 }}" placeholder="Entrez le quartier ou choisissez" required>
+                        </div>
+                        <!-- Datalist of existing quartiers for suggestions -->
+                        <datalist id="quartiers-list">
+                            {% for q in quartiers %}
+                                <option value="{{ q }}">{{ q }}</option>
+                            {% endfor %}
+                        </datalist>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-search"></i> Comparer
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                {% if mode == 'quartier_vs_quartier' %}
+                    <hr>
+                    <div class="row mb-3 align-items-center">
+                        <div class="col-md-8">
+                            <div class="d-flex gap-3">
+                                <div class="card text-white bg-primary">
+                                    <div class="card-body p-3">
+                                        <h5 class="card-title mb-1">{{ stats_q1.quartier_label }}</h5>
+                                        <p class="mb-0">Moyenne : <strong>{{ stats_q1.moyenne|floatformat:0 }} FCFA</strong></p>
+                                        <p class="mb-0">Médiane : <strong>{{ stats_q1.mediane|floatformat:0 }} FCFA</strong></p>
+                                    </div>
+                                </div>
+                                <div class="card text-white bg-success">
+                                    <div class="card-body p-3">
+                                        <h5 class="card-title mb-1">{{ stats_q2.quartier_label }}</h5>
+                                        <p class="mb-0">Moyenne : <strong>{{ stats_q2.moyenne|floatformat:0 }} FCFA</strong></p>
+                                        <p class="mb-0">Médiane : <strong>{{ stats_q2.mediane|floatformat:0 }} FCFA</strong></p>
+                                    </div>
+                                </div>
+                                <div class="card bg-light">
+                                    <div class="card-body p-3">
+                                        <h6 class="mb-1">Différence de moyenne</h6>
+                                        <p class="mb-0"><strong>{{ diff_moyenne|floatformat:0 }} FCFA</strong></p>
+                                        <small class="text-muted">Plus cher : {% if plus_cher == stats_q1.quartier %}{{ stats_q1.quartier_label }}{% else %}{{ stats_q2.quartier_label }}{% endif %}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <form method="get" action="{% url 'export_comparaison_csv' %}">
+                                <input type="hidden" name="q1" value="{{ request.GET.q1 }}">
+                                <input type="hidden" name="q2" value="{{ request.GET.q2 }}">
+                                <button class="btn btn-success">
+                                    <i class="bi bi-download"></i> Télécharger les données (CSV)
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="graph-container border rounded p-2 bg-white">
+                                <img src="data:image/png;base64,{{ graph_comparaison }}" alt="Comparaison" class="img-fluid">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <table class="table table-sm">
+                                        <tr>
+                                            <td><strong>Moyenne :</strong></td>
+                                            <td class="text-end">{{ stats_q1.moyenne|floatformat:0 }} FCFA</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Médiane :</strong></td>
+                                            <td class="text-end">{{ stats_q1.mediane|floatformat:0 }} FCFA</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Minimum :</strong></td>
+                                            <td class="text-end">{{ stats_q1.min|floatformat:0 }} FCFA</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Maximum :</strong></td>
+                                            <td class="text-end">{{ stats_q1.max|floatformat:0 }} FCFA</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Nombre de dépenses :</strong></td>
+                                            <td class="text-end"><span class="badge bg-primary">{{ stats_q1.nombre }}</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Écart-type :</strong></td>
+                                            <td class="text-end">{{ stats_q1.ecart_type|floatformat:0 }} FCFA</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <table class="table table-sm">
+                                        <tr>
+                                            <td><strong>Moyenne :</strong></td>
+                                            <td class="text-end">{{ stats_q2.moyenne|floatformat:0 }} FCFA</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Médiane :</strong></td>
+                                            <td class="text-end">{{ stats_q2.mediane|floatformat:0 }} FCFA</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Minimum :</strong></td>
+                                            <td class="text-end">{{ stats_q2.min|floatformat:0 }} FCFA</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Maximum :</strong></td>
+                                            <td class="text-end">{{ stats_q2.max|floatformat:0 }} FCFA</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Nombre de dépenses :</strong></td>
+                                            <td class="text-end"><span class="badge bg-success">{{ stats_q2.nombre }}</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Écart-type :</strong></td>
+                                            <td class="text-end">{{ stats_q2.ecart_type|floatformat:0 }} FCFA</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 2: Quartier vs Ville -->
+    <div class="tab-pane fade" id="ville" role="tabpanel">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-geo-alt"></i> Comparaison Quartier vs Ville
+            </div>
+            <div class="card-body">
+                <form method="get" action="{% url 'comparaison' %}">
+                    <input type="hidden" name="mode" value="quartier_ville">
+                    <div class="row mb-3">
+                        <div class="col-md-10">
+                            <label for="quartier_ville_select" class="form-label">Sélectionner un quartier</label>
+                            <input name="quartier" id="quartier_ville_select" list="quartiers-list" class="form-control" value="{{ request.GET.quartier }}" placeholder="Entrez le quartier ou choisissez" required>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-search"></i> Comparer
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                {% if mode == 'quartier_vs_ville' %}
+                    <div class="row mb-3 align-items-center">
+                        <div class="col-md-8">
+                            <div class="d-flex gap-3">
+                                <div class="card text-white bg-primary">
+                                    <div class="card-body p-3">
+                                        <h5 class="card-title mb-1">{{ stats_quartier.quartier_label }}</h5>
+                                        <p class="mb-0">Moyenne : <strong>{{ stats_quartier.moyenne|floatformat:0 }} FCFA</strong></p>
+                                        <p class="mb-0">Médiane : <strong>{{ stats_quartier.mediane|floatformat:0 }} FCFA</strong></p>
+                                    </div>
+                                </div>
+                                <div class="card text-white bg-info">
+                                    <div class="card-body p-3">
+                                        <h5 class="card-title mb-1">Ville (moyenne globale)</h5>
+                                        <p class="mb-0">Moyenne : <strong>{{ stats_ville.moyenne|floatformat:0 }} FCFA</strong></p>
+                                        <p class="mb-0">Médiane : <strong>{{ stats_ville.mediane|floatformat:0 }} FCFA</strong></p>
+                                    </div>
+                                </div>
+                                <div class="card bg-light">
+                                    <div class="card-body p-3">
+                                        <h6 class="mb-1">Différence</h6>
+                                        <p class="mb-0"><strong>{{ stats_quartier.moyenne|floatformat:0 }} vs {{ stats_ville.moyenne|floatformat:0 }}</strong></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <form method="get" action="{% url 'export_comparaison_csv' %}">
+                                <input type="hidden" name="mode" value="quartier_ville">
+                                <input type="hidden" name="quartier" value="{{ request.GET.quartier }}">
+                                <button class="btn btn-success">
+                                    <i class="bi bi-download"></i> Télécharger les données (CSV)
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="graph-container border rounded p-2 bg-white">
+                                <img src="data:image/png;base64,{{ graph_comparaison }}" alt="Comparaison" class="img-fluid">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <table class="table table-sm">
+                                        <tr>
+                                            <td><strong>Moyenne :</strong></td>
+                                            <td class="text-end">{{ stats_quartier.moyenne|floatformat:0 }} FCFA</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Médiane :</strong></td>
+                                            <td class="text-end">{{ stats_quartier.mediane|floatformat:0 }} FCFA</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Minimum :</strong></td>
+                                            <td class="text-end">{{ stats_quartier.min|floatformat:0 }} FCFA</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Maximum :</strong></td>
+                                            <td class="text-end">{{ stats_quartier.max|floatformat:0 }} FCFA</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Nombre :</strong></td>
+                                            <td class="text-end"><span class="badge bg-primary">{{ stats_quartier.nombre }}</span></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <table class="table table-sm">
+                                        <tr>
+                                            <td><strong>Moyenne :</strong></td>
+                                            <td class="text-end">{{ stats_ville.moyenne|floatformat:0 }} FCFA</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Médiane :</strong></td>
+                                            <td class="text-end">{{ stats_ville.mediane|floatformat:0 }} FCFA</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Minimum :</strong></td>
+                                            <td class="text-end">{{ stats_ville.min|floatformat:0 }} FCFA</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Maximum :</strong></td>
+                                            <td class="text-end">{{ stats_ville.max|floatformat:0 }} FCFA</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Nombre :</strong></td>
+                                            <td class="text-end"><span class="badge bg-info">{{ stats_ville.nombre }}</span></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 3: Campus vs Environnement -->
+    <div class="tab-pane fade" id="campus" role="tabpanel">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-mortarboard"></i> Comparaison Campus vs Environnement immédiat
+            </div>
+            <div class="card-body">
+                <form method="get" action="{% url 'comparaison' %}">
+                    <input type="hidden" name="mode" value="campus_env">
+                    <div class="row mb-3">
+                        <div class="col-md-10">
+                            <p class="text-muted">Comparez les coûts sur le campus avec ceux de l'environnement immédiat (hors campus).</p>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-search"></i> Comparer
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                {% if mode == 'campus_vs_env' %}
+                    <div class="row mb-3 align-items-center">
+                        <div class="col-md-8">
+                            <div class="d-flex gap-3">
+                                <div class="card text-dark bg-warning">
+                                    <div class="card-body p-3">
+                                        <h5 class="card-title mb-1">Campus</h5>
+                                        <p class="mb-0">Moyenne : <strong>{{ stats_campus.moyenne|floatformat:0 }} FCFA</strong></p>
+                                        <p class="mb-0">Médiane : <strong>{{ stats_campus.mediane|floatformat:0 }} FCFA</strong></p>
+                                    </div>
+                                </div>
+                                <div class="card bg-light">
+                                    <div class="card-body p-3">
+                                        <h5 class="card-title mb-1">Environnement immédiat</h5>
+                                        <p class="mb-0">Moyenne : <strong>{{ stats_env.moyenne|floatformat:0 }} FCFA</strong></p>
+                                        <p class="mb-0">Médiane : <strong>{{ stats_env.mediane|floatformat:0 }} FCFA</strong></p>
+                                    </div>
+                                </div>
+                                <div class="card bg-light">
+                                    <div class="card-body p-3">
+                                        <h6 class="mb-1">Différence</h6>
+                                        <p class="mb-0"><strong>{{ stats_campus.moyenne|floatformat:0 }} vs {{ stats_env.moyenne|floatformat:0 }}</strong></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <form method="get" action="{% url 'export_comparaison_csv' %}">
+                                <input type="hidden" name="mode" value="campus_env">
+                                <button class="btn btn-success">
+                                    <i class="bi bi-download"></i> Télécharger les données (CSV)
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="graph-container border rounded p-2 bg-white">
+                                <img src="data:image/png;base64,{{ graph_comparaison }}" alt="Comparaison" class="img-fluid">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <table class="table table-sm">
+                                        <tr>
+                                            <td><strong>Moyenne :</strong></td>
+                                            <td class="text-end">{{ stats_campus.moyenne|floatformat:0 }} FCFA</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Médiane :</strong></td>
+                                            <td class="text-end">{{ stats_campus.mediane|floatformat:0 }} FCFA</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Minimum :</strong></td>
+                                            <td class="text-end">{{ stats_campus.min|floatformat:0 }} FCFA</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Maximum :</strong></td>
+                                            <td class="text-end">{{ stats_campus.max|floatformat:0 }} FCFA</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Nombre :</strong></td>
+                                            <td class="text-end"><span class="badge bg-warning text-dark">{{ stats_campus.nombre }}</span></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <table class="table table-sm">
+                                        <tr>
+                                            <td><strong>Moyenne :</strong></td>
+                                            <td class="text-end">{{ stats_env.moyenne|floatformat:0 }} FCFA</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Médiane :</strong></td>
+                                            <td class="text-end">{{ stats_env.mediane|floatformat:0 }} FCFA</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Minimum :</strong></td>
+                                            <td class="text-end">{{ stats_env.min|floatformat:0 }} FCFA</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Maximum :</strong></td>
+                                            <td class="text-end">{{ stats_env.max|floatformat:0 }} FCFA</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Nombre :</strong></td>
+                                            <td class="text-end"><span class="badge bg-secondary">{{ stats_env.nombre }}</span></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

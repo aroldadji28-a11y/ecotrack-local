@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - EcoTrack Local{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-graph-up"></i> Dashboard de Visualisation</h1>
+    <p class="mb-0">Statistiques, graphiques et analyses des coûts de vie</p>
+</div>
+
+{% if message %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> {{ message }}
+    </div>
+{% else %}
+    <!-- Statistiques globales -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="number">{{ stats_globales.total_depenses }}</div>
+                <div class="label">Total dépenses</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="number">{{ stats_globales.prix_moyen_global|floatformat:0 }}</div>
+                <div class="label">Prix moyen (FCFA)</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="number">{{ stats_globales.prix_median_global|floatformat:0 }}</div>
+                <div class="label">Prix médian (FCFA)</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="number">{{ stats_globales.anomalies }}</div>
+                <div class="label">Anomalies détectées</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graphiques -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="graph-container">
+                <h4 class="mb-3"><i class="bi bi-graph-up-arrow"></i> Série temporelle des prix moyens</h4>
+                <img src="data:image/png;base64,{{ graphs.serie_temporelle }}" alt="Série temporelle">
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="graph-container">
+                <h4 class="mb-3"><i class="bi bi-bar-chart"></i> Prix moyens et médians par quartier</h4>
+                <img src="data:image/png;base64,{{ graphs.par_quartier }}" alt="Prix par quartier">
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="graph-container">
+                <h4 class="mb-3"><i class="bi bi-pie-chart"></i> Prix moyens par type de dépense</h4>
+                <img src="data:image/png;base64,{{ graphs.par_type }}" alt="Prix par type">
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="graph-container">
+                <h4 class="mb-3"><i class="bi bi-box"></i> Distribution des prix par quartier (Box Plot)</h4>
+                <img src="data:image/png;base64,{{ graphs.boxplot }}" alt="Box plot">
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableaux de synthèse -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-table"></i> Statistiques par quartier
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Quartier</th>
+                                    <th>Moyenne</th>
+                                    <th>Médiane</th>
+                                    <th>Min</th>
+                                    <th>Max</th>
+                                    <th>Nombre</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stat in stats_quartier %}
+                                <tr>
+                                    <td><strong>{{ stat.quartier_label }}</strong></td>
+                                    <td>{{ stat.moyenne|floatformat:0 }} FCFA</td>
+                                    <td>{{ stat.mediane|floatformat:0 }} FCFA</td>
+                                    <td>{{ stat.min|floatformat:0 }} FCFA</td>
+                                    <td>{{ stat.max|floatformat:0 }} FCFA</td>
+                                    <td><span class="badge bg-primary">{{ stat.nombre }}</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-table"></i> Statistiques par type de dépense
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Moyenne</th>
+                                    <th>Médiane</th>
+                                    <th>Min</th>
+                                    <th>Max</th>
+                                    <th>Nombre</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stat in stats_type %}
+                                <tr>
+                                    <td><strong>{{ stat.type_label }}</strong></td>
+                                    <td>{{ stat.moyenne|floatformat:0 }} FCFA</td>
+                                    <td>{{ stat.mediane|floatformat:0 }} FCFA</td>
+                                    <td>{{ stat.min|floatformat:0 }} FCFA</td>
+                                    <td>{{ stat.max|floatformat:0 }} FCFA</td>
+                                    <td><span class="badge bg-success">{{ stat.nombre }}</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques détaillées -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-info-circle"></i> Statistiques globales détaillées
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <h5>Prix minimum</h5>
+                            <p class="h4 text-primary">{{ stats_globales.prix_min_global|floatformat:0 }} FCFA</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h5>Prix maximum</h5>
+                            <p class="h4 text-danger">{{ stats_globales.prix_max_global|floatformat:0 }} FCFA</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h5>Quartiers couverts</h5>
+                            <p class="h4 text-success">{{ stats_globales.nombre_quartiers }}</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h5>Types de dépenses</h5>
+                            <p class="h4 text-info">{{ stats_globales.nombre_types }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

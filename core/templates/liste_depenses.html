@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+
+{% block title %}Liste des dépenses - EcoTrack Local{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-list-ul"></i> Liste des Dépenses</h1>
+    <p class="mb-0">Consultez et filtrez toutes les dépenses enregistrées</p>
+</div>
+
+<!-- Statistiques rapides -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="number">{{ total }}</div>
+            <div class="label">Total dépenses</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="number">{{ total_prix|floatformat:0 }}</div>
+            <div class="label">Total prix (FCFA)</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="number">{{ prix_moyen|floatformat:0 }}</div>
+            <div class="label">Prix moyen (FCFA)</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtres -->
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="bi bi-funnel"></i> Filtres
+    </div>
+    <div class="card-body">
+        <form method="get" action="{% url 'liste_depenses' %}">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="quartier" class="form-label">Quartier</label>
+                    <select name="quartier" id="quartier" class="form-select">
+                        <option value="">Tous les quartiers</option>
+                        {% for q in quartiers %}
+                            <option value="{{ q }}" {% if quartier_filter == q %}selected{% endif %}>{{ q }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="type" class="form-label">Type de dépense</label>
+                    <select name="type" id="type" class="form-select">
+                        <option value="">Tous les types</option>
+                        {% for t in types %}
+                            <option value="{{ t }}" {% if type_filter == t %}selected{% endif %}>
+                                {% if t == 'alimentation' %}Alimentation
+                                {% elif t == 'logement' %}Logement
+                                {% elif t == 'transport' %}Transport
+                                {% elif t == 'loisirs' %}Loisirs
+                                {% else %}{{ t }}{% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="anomalie" class="form-label">Anomalie</label>
+                    <select name="anomalie" id="anomalie" class="form-select">
+                        <option value="">Toutes</option>
+                        <option value="oui" {% if anomalie_filter == 'oui' %}selected{% endif %}>Avec anomalie</option>
+                        <option value="non" {% if anomalie_filter == 'non' %}selected{% endif %}>Sans anomalie</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label for="month" class="form-label">Mois</label>
+                    <input type="month" name="month" id="month" class="form-control" value="{{ month_filter }}">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="prix_min" class="form-label">Prix min (FCFA)</label>
+                    <input type="number" step="1" name="prix_min" id="prix_min" class="form-control" value="{{ prix_min }}">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="prix_max" class="form-label">Prix max (FCFA)</label>
+                    <input type="number" step="1" name="prix_max" id="prix_max" class="form-control" value="{{ prix_max }}">
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> Filtrer
+                </button>
+                <button type="submit" formaction="{% url 'export_csv' %}" formmethod="get" class="btn btn-success">
+                    <i class="bi bi-download"></i> Télécharger CSV (filtré)
+                </button>
+                <a href="{% url 'liste_depenses' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle"></i> Réinitialiser
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Liste des dépenses -->
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-table"></i> Dépenses ({{ total }} résultat{{ total|pluralize }})
+    </div>
+    <div class="card-body">
+        {% if depenses %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Quartier</th>
+                        <th>Lieu</th>
+                        <th>Prix (FCFA)</th>
+                        <th>Commentaire</th>
+                        <th>Anomalie</th>
+                        <th>Photo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for depense in depenses %}
+                    <tr {% if depense.anomalie %}class="table-warning"{% endif %}>
+                        <td>{{ depense.date|date:"d/m/Y" }}</td>
+                        <td><span class="badge bg-primary">{{ depense.get_type_depense_display }}</span></td>
+                        <td><span class="badge bg-secondary">{{ depense.quartier }}</span></td>
+                        <td>{{ depense.lieu|truncatewords:5 }}</td>
+                        <td><strong>{{ depense.prix|floatformat:0 }}</strong></td>
+                        <td>
+                            {% if depense.commentaire %}
+                                <small>{{ depense.commentaire|truncatewords:8 }}</small>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if depense.anomalie %}
+                                <span class="badge bg-warning text-dark">
+                                    <i class="bi bi-exclamation-triangle"></i> Oui
+                                </span>
+                                <br>
+                                <small class="text-muted">{{ depense.anomalie|truncatewords:5 }}</small>
+                            {% else %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle"></i> Non
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if depense.photo %}
+                                <a href="{{ depense.photo.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-image"></i> Voir
+                                </a>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> Aucune dépense trouvée avec ces filtres.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

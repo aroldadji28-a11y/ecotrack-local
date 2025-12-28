@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}Saisie de dépense - EcoTrack Local{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-plus-circle"></i> Saisir une nouvelle dépense</h1>
+    <p class="mb-0">Remplissez le formulaire ci-dessous pour enregistrer une dépense</p>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-file-earmark-text"></i> Formulaire de saisie
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.type_depense.id_for_label }}" class="form-label">
+                                <i class="bi bi-tag"></i> Type de dépense <span class="text-danger">*</span>
+                            </label>
+                            {{ form.type_depense }}
+                            {% if form.type_depense.errors %}
+                                <div class="text-danger small">{{ form.type_depense.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="{{ form.quartier.id_for_label }}" class="form-label">
+                                <i class="bi bi-geo-alt"></i> Quartier <span class="text-danger">*</span>
+                            </label>
+                            {{ form.quartier }}
+                            {% if form.quartier.errors %}
+                                <div class="text-danger small">{{ form.quartier.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.prix.id_for_label }}" class="form-label">
+                                <i class="bi bi-currency-exchange"></i> Prix (FCFA) <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                {{ form.prix }}
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                            {% if form.prix.errors %}
+                                <div class="text-danger small">{{ form.prix.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">Le prix doit être supérieur à 0</small>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="{{ form.date.id_for_label }}" class="form-label">
+                                <i class="bi bi-calendar"></i> Date <span class="text-danger">*</span>
+                            </label>
+                            {{ form.date }}
+                            {% if form.date.errors %}
+                                <div class="text-danger small">{{ form.date.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">La date ne peut pas être dans le futur</small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.lieu.id_for_label }}" class="form-label">
+                            <i class="bi bi-geo"></i> Lieu précis <span class="text-danger">*</span>
+                        </label>
+                        {{ form.lieu }}
+                        {% if form.lieu.errors %}
+                            <div class="text-danger small">{{ form.lieu.errors }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Ex: "Marché central, étalage n°5" ou "Restaurant Le Bon Goût"</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.commentaire.id_for_label }}" class="form-label">
+                            <i class="bi bi-chat-left-text"></i> Commentaire (optionnel)
+                        </label>
+                        {{ form.commentaire }}
+                        {% if form.commentaire.errors %}
+                            <div class="text-danger small">{{ form.commentaire.errors }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Ajoutez des détails supplémentaires sur cette dépense</small>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="{{ form.photo.id_for_label }}" class="form-label">
+                            <i class="bi bi-camera"></i> Photo justificative (optionnel)
+                        </label>
+                        {{ form.photo }}
+                        {% if form.photo.errors %}
+                            <div class="text-danger small">{{ form.photo.errors }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Téléchargez une photo du ticket ou de la facture</small>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'accueil' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle"></i> Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Enregistrer la dépense
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <i class="bi bi-info-circle"></i> Informations importantes
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li>Les champs marqués d'un <span class="text-danger">*</span> sont obligatoires</li>
+                    <li>Le prix doit être strictement supérieur à 0</li>
+                    <li>La date ne peut pas être dans le futur</li>
+                    <li>Les doublons et valeurs aberrantes seront détectés automatiquement</li>
+                    <li>Les photos justificatives aident à valider la qualité des données</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Prévisualisation de la photo
+    document.getElementById('{{ form.photo.id_for_label }}').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Supprimer l'ancienne prévisualisation si elle existe
+                const oldPreview = document.getElementById('photo-preview');
+                if (oldPreview) {
+                    oldPreview.remove();
+                }
+                
+                // Créer une nouvelle prévisualisation
+                const preview = document.createElement('div');
+                preview.id = 'photo-preview';
+                preview.className = 'mt-3';
+                preview.innerHTML = `
+                    <label class="form-label">Aperçu :</label>
+                    <div>
+                        <img src="${e.target.result}" alt="Aperçu" class="img-thumbnail" style="max-width: 300px; max-height: 300px;">
+                    </div>
+                `;
+                e.target.closest('.mb-4').appendChild(preview);
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+</script>
+{% endblock %}
